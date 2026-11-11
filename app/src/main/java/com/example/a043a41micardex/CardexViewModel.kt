@@ -9,19 +9,19 @@ import kotlinx.coroutines.launch
 
 class CardexViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val dao = AppDatabase.get(app).materiaDao()
+    private val repository = MateriaRepository(AppDatabase.get(app).materiaDao())
     private val prefs = PerfilPrefs(app)
 
     val nombreAlumno: String = prefs.nombre
     val numeroControl: String = prefs.numeroControl
 
-    val materias = dao.observarTodas()
+    val materias = repository.materias
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val promedioGeneral = dao.promedioGeneral()
+    val promedioGeneral = repository.promedioGeneral
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    val promediosSemestre = dao.promediosPorSemestre()
+    val promediosSemestre = repository.promediosSemestre
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private fun normalizar(cal: Double?): Double? =
@@ -34,11 +34,11 @@ class CardexViewModel(app: Application) : AndroidViewModel(app) {
             calEspecial = normalizar(materia.calEspecial)
         )
         viewModelScope.launch {
-            if (ajustada.id == 0) dao.insertar(ajustada) else dao.actualizar(ajustada)
+            if (ajustada.id == 0) repository.insertar(ajustada) else repository.actualizar(ajustada)
         }
     }
 
     fun eliminarMateria(materia: Materia) {
-        viewModelScope.launch { dao.eliminar(materia) }
+        viewModelScope.launch { repository.eliminar(materia) }
     }
 }
